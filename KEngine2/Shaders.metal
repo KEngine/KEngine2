@@ -1,30 +1,24 @@
 //
 //  Shaders.metal
-//  KEngine2
+//  KTerrain
 //
 //  Created by 哈哈 on 15/10/19.
-//  Copyright © 2015年 哈哈. All rights reserved.
+//  Copyright (c) 2015年 哈哈. All rights reserved.
 //
 
 #include <metal_stdlib>
-
+#include "shaderType.h"
 using namespace metal;
 
-struct VertexInOut
-{
-    float4  position [[position]];
-    float4  color;
-};
+
 
 vertex VertexInOut passThroughVertex(uint vid [[ vertex_id ]],
-                                     constant packed_float4* position  [[ buffer(0) ]],
-                                     constant packed_float4* color    [[ buffer(1) ]])
+                                     const device VertexIn* in  [[ buffer(0)]],const device float4x4& projection [[buffer(1)]],const device float4x4& view [[buffer(2)]],const device float4x4& model [[buffer(3)]])
 {
     VertexInOut outVertex;
     
-    outVertex.position = position[vid];
-    outVertex.color    = color[vid];
-    
+    outVertex.position = projection * view * model * float4(in[vid].position,1);
+    outVertex.color = float4(in[vid].color,1);
     return outVertex;
 };
 

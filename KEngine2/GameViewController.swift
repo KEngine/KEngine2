@@ -10,180 +10,79 @@ import UIKit
 import Metal
 import MetalKit
 
-let MaxBuffers = 3
-let ConstantBufferSize = 1024*1024
 
-let vertexData:[Float] =
-[
-    -1.0, -1.0, 0.0, 1.0,
-    -1.0,  1.0, 0.0, 1.0,
-    1.0, -1.0, 0.0, 1.0,
-    
-    1.0, -1.0, 0.0, 1.0,
-    -1.0,  1.0, 0.0, 1.0,
-    1.0,  1.0, 0.0, 1.0,
-    
-    -0.0, 0.25, 0.0, 1.0,
-    -0.25, -0.25, 0.0, 1.0,
-    0.25, -0.25, 0.0, 1.0
-]
 
-let vertexColorData:[Float] =
-[
-    0.0, 0.0, 1.0, 1.0,
-    0.0, 0.0, 1.0, 1.0,
-    0.0, 0.0, 1.0, 1.0,
+class GameViewController:UIViewController{
     
-    0.0, 0.0, 1.0, 1.0,
-    0.0, 0.0, 1.0, 1.0,
-    0.0, 0.0, 1.0, 1.0,
+    let m_device: MTLDevice = MTLCreateSystemDefaultDevice()!
+    var m_render:GameRender! = nil
+    var m_mtkView:MTKView! = nil
+    var m_actorBuffer:GameActorBuffer! = nil
+    var m_camera:GameCamera! = nil
+   
     
-    0.0, 0.0, 1.0, 1.0,
-    0.0, 1.0, 0.0, 1.0,
-    1.0, 0.0, 0.0, 1.0
-]
-
-class GameViewController:UIViewController, MTKViewDelegate {
     
-    let device: MTLDevice = MTLCreateSystemDefaultDevice()!
-    
-    var commandQueue: MTLCommandQueue! = nil
-    var pipelineState: MTLRenderPipelineState! = nil
-    var vertexBuffer: MTLBuffer! = nil
-    var vertexColorBuffer: MTLBuffer! = nil
-    
-    let inflightSemaphore = dispatch_semaphore_create(MaxBuffers)
-    var bufferIndex = 0
-    
-    // offsets used in animation
-    var xOffset:[Float] = [ -1.0, 1.0, -1.0 ]
-    var yOffset:[Float] = [ 1.0, 0.0, -1.0 ]
-    var xDelta:[Float] = [ 0.002, -0.001, 0.003 ]
-    var yDelta:[Float] = [ 0.001,  0.002, -0.001 ]
     
     override func viewDidLoad() {
         
         super.viewDidLoad()
         
         // setup view properties
-        let view = self.view as! MTKView
-        view.device = device;
-        view.delegate = self
+        m_mtkView = self.view as! MTKView
+
+
+        m_mtkView.device = m_device;
         
+        m_render = GameRender(scene: self)
+
+        m_mtkView.delegate = m_render
         loadAssets()
     }
     
     func loadAssets() {
+       loadCamera()
+        m_actorBuffer = GameActorBuffer(scene: self)
+        loadActor()
+        loadLight()
+    
         
-        // load any resources required for rendering
-        let view = self.view as! MTKView
-        commandQueue = device.newCommandQueue()
-        commandQueue.label = "main command queue"
+    }
+    func loadActor(){
+        let actor1   = GameActor(vertex:triangle1_vertex, index: triangle_index, scene: self)
+        actor1.translate(0, y: 0, z: -2)
+        actor1.register()
+        let actor2   = GameActor(vertex:triangle2_vertex, index: triangle_index, scene: self)
+        actor2.translate(-2, y: 0, z: 0)
+        actor2.register()
+        let actor3   = GameActor(vertex:triangle3_vertex, index: triangle_index, scene: self)
+        actor3.translate(0, y: 0, z:2)
+        actor3.register()
+        let actor4   = GameActor(vertex:triangle4_vertex, index: triangle_index, scene: self)
+        actor4.translate(2, y: 0, z: 0)
+        actor4.register()
+        let actor5   = GameActor(vertex: flat_vertex, index: flat_index, scene: self)
+        actor5.translate(0, y: -1, z: 0)
+        actor5.register()
         
-        let defaultLibrary = device.newDefaultLibrary()!
-        let fragmentProgram = defaultLibrary.newFunctionWithName("passThroughFragment")!
-        let vertexProgram = defaultLibrary.newFunctionWithName("passThroughVertex")!
+        let actor6   = GameActor(vertex: sephere1_vertices, index: sephere_indices, scene: self)
+        actor6.translate(0, y: -1, z: 0)
+        actor6.register()
         
-        let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
-        pipelineStateDescriptor.vertexFunction = vertexProgram
-        pipelineStateDescriptor.fragmentFunction = fragmentProgram
-        pipelineStateDescriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
-        pipelineStateDescriptor.sampleCount = view.sampleCount
-        
-        do {
-            try pipelineState = device.newRenderPipelineStateWithDescriptor(pipelineStateDescriptor)
-        } catch let error {
-            print("Failed to create pipeline state, error \(error)")
-        }
-        
-        // generate a large enough buffer to allow streaming vertices for 3 semaphore controlled frames
-        vertexBuffer = device.newBufferWithLength(ConstantBufferSize, options: [])
-        vertexBuffer.label = "vertices"
-        
-        let vertexColorSize = vertexData.count * sizeofValue(vertexColorData[0])
-        vertexColorBuffer = device.newBufferWithBytes(vertexColorData, length: vertexColorSize, options: [])
-        vertexColorBuffer.label = "colors"
+
     }
     
-    func update() {
+    func loadLight(){
+        let light1 = GameLightActor(vertex: sephere_vertices, index: sephere_indices, pos: [0,0,0], color: [1,1,1], scene: self)
+        light1.scale(5)
+        light1.translate(0, y: 0, z: 0)
+        light1.register()
         
-        // vData is pointer to the MTLBuffer's Float data contents
-        let pData = vertexBuffer.contents()
-        let vData = UnsafeMutablePointer<Float>(pData + 256*bufferIndex)
-        
-        // reset the vertices to default before adding animated offsets
-        vData.initializeFrom(vertexData)
-        
-        // Animate triangle offsets
-        let lastTriVertex = 24
-        let vertexSize = 4
-        for j in 0..<MaxBuffers {
-            // update the animation offsets
-            xOffset[j] += xDelta[j]
-            
-            if(xOffset[j] >= 1.0 || xOffset[j] <= -1.0) {
-                xDelta[j] = -xDelta[j]
-                xOffset[j] += xDelta[j]
-            }
-            
-            yOffset[j] += yDelta[j]
-            
-            if(yOffset[j] >= 1.0 || yOffset[j] <= -1.0) {
-                yDelta[j] = -yDelta[j]
-                yOffset[j] += yDelta[j]
-            }
-            
-            // Update last triangle position with updated animated offsets
-            let pos = lastTriVertex + j*vertexSize
-            vData[pos] = xOffset[j]
-            vData[pos+1] = yOffset[j]
-        }
-    }
-    
-    func drawInMTKView(view: MTKView) {
-        
-        // use semaphore to encode 3 frames ahead
-        dispatch_semaphore_wait(inflightSemaphore, DISPATCH_TIME_FOREVER)
-        
-        self.update()
-        
-        let commandBuffer = commandQueue.commandBuffer()
-        commandBuffer.label = "Frame command buffer"
-        
-        // use completion handler to signal the semaphore when this frame is completed allowing the encoding of the next frame to proceed
-        // use capture list to avoid any retain cycles if the command buffer gets retained anywhere besides this stack frame
-        commandBuffer.addCompletedHandler{ [weak self] commandBuffer in
-            if let strongSelf = self {
-                dispatch_semaphore_signal(strongSelf.inflightSemaphore)
-            }
-            return
-        }
-        
-        if let renderPassDescriptor = view.currentRenderPassDescriptor, currentDrawable = view.currentDrawable
-        {
-            let renderEncoder = commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor)
-            renderEncoder.label = "render encoder"
-            
-            renderEncoder.pushDebugGroup("draw morphing triangle")
-            renderEncoder.setRenderPipelineState(pipelineState)
-            renderEncoder.setVertexBuffer(vertexBuffer, offset: 256*bufferIndex, atIndex: 0)
-            renderEncoder.setVertexBuffer(vertexColorBuffer, offset:0 , atIndex: 1)
-            renderEncoder.drawPrimitives(.Triangle, vertexStart: 0, vertexCount: 9, instanceCount: 1)
-            
-            renderEncoder.popDebugGroup()
-            renderEncoder.endEncoding()
-                
-            commandBuffer.presentDrawable(currentDrawable)
-        }
-        
-        // bufferIndex matches the current semaphore controled frame index to ensure writing occurs at the correct region in the vertex buffer
-        bufferIndex = (bufferIndex + 1) % MaxBuffers
-        
-        commandBuffer.commit()
     }
     
     
-    func mtkView(view: MTKView, drawableSizeWillChange size: CGSize) {
-        
+    func loadCamera(){
+        m_camera = GameCamera(pos: [5,5,5], center: [0,0,0], up: [0,1,0], scene: self)
     }
+    
+    
 }
