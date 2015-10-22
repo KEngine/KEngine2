@@ -28,6 +28,7 @@ class GameRender: NSObject,MTKViewDelegate{
     
     
     
+    
     var m_shadowMap:MTLTexture! = nil
     var m_shadowMapBlur:MTLTexture! = nil
     var m_shadowPass = MTLRenderPassDescriptor()
@@ -67,6 +68,9 @@ class GameRender: NSObject,MTKViewDelegate{
     var m_compositionVertexBuffer:MTLBuffer! = nil
     var m_renderToScreenBuffer:MTLBuffer! = nil
     
+    //var m_mtktextureLoader:MTKTextureLoader! = nil
+
+    
     
     init(scene:GameViewController) {
         super.init()
@@ -75,8 +79,10 @@ class GameRender: NSObject,MTKViewDelegate{
         m_library = m_scene.m_device.newDefaultLibrary()
         m_actors = [GameActor]()
         m_lights = [GameLightActor]()
+        //m_mtktextureLoader = MTKTextureLoader(device:m_scene.m_device)
+
         shadowPassDesc()
-        setShadowState()
+        //setShadowState()
         setGbufferState()
         setLightState()
         setCompostionState()
@@ -450,7 +456,7 @@ class GameRender: NSObject,MTKViewDelegate{
         renderEncoder.setCullMode(.Back)
 
         if m_actors.count == 0 {
-            print("There Is No Actor")
+            return
         }else{
             renderEncoder.setVertexBuffer(m_scene.m_camera.projectionBuffer(), offset: 0, atIndex: ShaderIndex.Projection.rawValue)
             renderEncoder.setVertexBuffer(m_scene.m_camera.viewBuffer(), offset: 0, atIndex: ShaderIndex.View.rawValue)
@@ -478,7 +484,7 @@ class GameRender: NSObject,MTKViewDelegate{
         
         
         if m_lights.count == 0{
-            print("There is no light")
+            return
         }else{
             renderEncoder.setVertexBuffer(m_scene.m_camera.projectionBuffer(), offset: 0, atIndex: ShaderIndex.Projection.rawValue)
             renderEncoder.setVertexBuffer(m_scene.m_camera.viewBuffer(), offset: 0, atIndex: ShaderIndex.View.rawValue)

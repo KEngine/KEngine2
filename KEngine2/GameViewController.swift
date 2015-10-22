@@ -15,6 +15,8 @@ import MetalKit
 class GameViewController:UIViewController{
     
     let m_device: MTLDevice = MTLCreateSystemDefaultDevice()!
+    var m_mtktextureLoader:MTKTextureLoader! = nil
+    
     var m_render:GameRender! = nil
     var m_mtkView:MTKView! = nil
     var m_actorBuffer:GameActorBuffer! = nil
@@ -42,6 +44,9 @@ class GameViewController:UIViewController{
     }
     
     func loadAssets() {
+        
+        m_mtktextureLoader = MTKTextureLoader(device:m_device)
+
        loadCamera()
         m_actorBuffer = GameActorBuffer(scene: self)
         loadActor()
@@ -62,10 +67,13 @@ class GameViewController:UIViewController{
         let actor4   = GameActor(vertex:triangle4_vertex, index: triangle_index, scene: self)
        // actor4.translate(2, y: 0, z: 0)
         actor4.register()*/
-        let actor5   = GameActor(vertex: flat_vertex, index: flat_index, scene: self)
+        /*let actor5   = GameActor(vertex: flat_vertex, index: flat_index, scene: self)
         actor5.translate(0, y: -1, z: 0)
         actor5.scale(10)
-        actor5.register()
+        actor5.register()*/
+        
+        
+        
         
         
         /*let actor7   = GameActor(vertex: flat_vertex, index: flat_index, scene: self)
@@ -88,8 +96,11 @@ class GameViewController:UIViewController{
         //let actor6   = GameActor(vertex: sephere2_vertices, index: sephere_indices, scene: self)
         //actor6.translate(0, y: 1, z: 0)
         //actor6.register()
-        
-
+        let actor = GameActor(filePath: "sf", scene: self)
+        actor.register()
+        let actor1 = GameActor(filePath: "tower", scene: self)
+        actor1.scale(0.01)
+        actor1.register()
     }
     
     func loadLight(){
@@ -132,7 +143,7 @@ class GameViewController:UIViewController{
         //print(sephere2_vertices.count)*/
         
         
-        for var i = -20 ; i < 20 ; ++i{
+        /*for var i = -20 ; i < 20 ; ++i{
             for var j = 20 ; j > -20 ; --j{
                 let light = GameLightActor(vertex: sephere_vertices, index: sephere_indices, pos: [0,0,0], color: [0.5 + Float(i) * 0.1,0.5 + Float(j),0.5], scene: self)
                 light.translate(Float(i) * 2, y: 1, z: Float(j) * 2)
@@ -145,9 +156,10 @@ class GameViewController:UIViewController{
                 actor.register()
 
             }
-        }
+        }*/
         
-        m_sun = [-60,150,-60,0,0,0]
+        
+        m_sun = [-60,150,-60,1,1,1]
 
     }
     

@@ -30,9 +30,9 @@ fragment float4 CompositionFragment(float4 in [[stage_in]],GBufferOut gBuffer,co
     float3 diffuse = light.rgb;
     float3 specluar = light.aaa;
     
-    float3 n_s = gBuffer.normal.rgb;
-    float sun_atten = gBuffer.color.a;
-    float sun_diffuse = 0.4;//fmax(dot(n_s * 2.0 - 1.0,sun.pos),0.0) * sun_atten;
+    //float3 n_s = gBuffer.normal.rgb;
+    //float sun_atten = gBuffer.color.a;
+    float sun_diffuse = float3(sun.color).x;//fmax(dot(n_s * 2.0 - 1.0,sun.pos),0.0) * sun_atten;
     
     diffuse += sun.color * sun_diffuse;
     diffuse *= float4(gBuffer.color).rgb;

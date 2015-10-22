@@ -20,6 +20,45 @@ class GameActor: NSObject {
     var m_indexOffset = 0
     var m_modelMatrix = float4x4(1)
     var m_modelBuffer : GameUniformBuffer! = nil
+    var m_actorTexture:MTLTexture?
+    
+    
+    init(filePath:String,scene:GameViewController){
+        let meshData = NSData(contentsOfURL: NSBundle.mainBundle().URLForResource(filePath, withExtension: "json")!)
+        //var error = NSErrorPointer()
+        m_scene = scene
+
+        var jsonDict:NSDictionary
+        do{
+            jsonDict = try NSJSONSerialization.JSONObjectWithData(meshData!, options: NSJSONReadingOptions.AllowFragments) as! NSDictionary
+        }catch let error as NSError{
+            fatalError(error.localizedDescription)
+        }
+        
+        let theVertex = jsonDict.objectForKey("vertex") as? [Float]
+        var theIndex = jsonDict.objectForKey("index") as? [Float]
+        var indices = [UInt32]()
+        for var i = 0 ; i < theIndex!.count ; ++i{
+            indices.append(UInt32(theIndex![i]))
+        }
+        
+        
+        do{
+            m_actorTexture = try m_scene.m_mtktextureLoader.newTextureWithContentsOfURL(NSBundle.mainBundle().URLForResource(filePath, withExtension: "png")!, options:nil)
+        }catch let error as NSError{
+            fatalError(error.localizedDescription)
+        }
+        m_vertex = theVertex!
+        m_index = indices
+        m_vertexOffset = m_scene.m_actorBuffer.vertexSize()
+        m_indexOffset = m_scene.m_actorBuffer.indexSize()
+        m_scene.m_actorBuffer.addBuffer(m_vertex, index: m_index)
+        m_modelBuffer = GameUniformBuffer(data: m_modelMatrix.dumpToSwift(), scene: scene)
+
+        
+        
+
+    }
     
     init(vertex:[Float],index:[UInt32],scene:GameViewController) {
         super.init()
@@ -56,7 +95,12 @@ class GameActor: NSObject {
     func renderActor(encoder:MTLRenderCommandEncoder){
         //rotate(0.01, axis: [0,1,0])
         encoder.setVertexBuffer(m_modelBuffer.buffer(), offset: 0, atIndex: ShaderIndex.Model.rawValue)
+        if m_actorTexture != nil{
+            encoder.setFragmentTexture(m_actorTexture, atIndex: 0)
+
+        }
         encoder.setVertexBufferOffset(m_vertexOffset * sizeofValue(m_vertex[0]), atIndex: 0)
+        
         encoder.drawIndexedPrimitives(MTLPrimitiveType.Triangle, indexCount: m_index.count, indexType: MTLIndexType.UInt32, indexBuffer: m_scene.m_actorBuffer.m_indexBuffer, indexBufferOffset: m_indexOffset * sizeofValue(m_index[0]))
     }
 }

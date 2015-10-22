@@ -31,7 +31,7 @@ struct LightUniform{
 struct VertexIn{
     packed_float3 position;
     packed_float3 normal;
-    packed_float3 color;
+    packed_float2 textCoord;
 };
 
 
@@ -48,7 +48,7 @@ struct GbufferInOut{
     float4 pos [[position]];
     float4 normal;
     float4 posWorld;
-    float3 color;
+    float2 textCoord;
     //float2 textCoord;
     float linearDepth;
 };
