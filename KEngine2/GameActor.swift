@@ -56,7 +56,7 @@ class GameActor: NSObject {
     func renderActor(encoder:MTLRenderCommandEncoder){
         //rotate(0.01, axis: [0,1,0])
         encoder.setVertexBuffer(m_modelBuffer.buffer(), offset: 0, atIndex: ShaderIndex.Model.rawValue)
-        encoder.setVertexBufferOffset(m_vertexOffset * sizeof(Float), atIndex: 0)
+        encoder.setVertexBufferOffset(m_vertexOffset * sizeofValue(m_vertex[0]), atIndex: 0)
         encoder.drawIndexedPrimitives(MTLPrimitiveType.Triangle, indexCount: m_index.count, indexType: MTLIndexType.UInt32, indexBuffer: m_scene.m_actorBuffer.m_indexBuffer, indexBufferOffset: m_indexOffset * sizeofValue(m_index[0]))
     }
 }

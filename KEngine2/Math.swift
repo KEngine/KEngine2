@@ -30,7 +30,7 @@ extension float4x4{
     
     
     
-    mutating func MatrixMakeFrustum_oc(left:Float,right:Float,bottom:Float,top:Float,near:Float,far:Float){
+    mutating func MatrixMakeFrustum(left:Float,right:Float,bottom:Float,top:Float,near:Float,far:Float){
         self = float4x4(0)
         let width:Float = right - left
         let height:Float = top - bottom
@@ -42,6 +42,22 @@ extension float4x4{
         self[2][3] = 1
         self[3][2] = -sDepth * near
     }
+    
+    mutating func MatrixMakeFrustum_oc(left:Float,right:Float,bottom:Float,top:Float,near:Float,far:Float){
+        self = float4x4(0)
+        let sWidth:Float = 1.0 / (right - left)
+        let sHeight:Float = 1.0 / (top - bottom)
+        let sDepth : Float = far / (far - near)
+        let dNear :Float = 2.0 * near
+        self[0][0] = dNear * sWidth
+        self[1][1] = dNear * sHeight
+        self[2][0] = -sWidth * (right + left)
+        self[2][1] = -sHeight * (top + bottom)
+        self[2][2] = sDepth
+        self[2][3] = 1
+        self[3][2] = -sDepth * near
+    }
+
     
     mutating func MatrixMakeOrtho2D_OC(left:Float,right:Float,bottom:Float,top:Float,near:Float,far:Float){
         self = float4x4(0)

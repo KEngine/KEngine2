@@ -29,8 +29,8 @@ class GameActorBuffer: NSObject {
         super.init()
         m_scene = scene
         //1MB的Buffer
-        m_vertexBuffer = m_scene.m_device.newBufferWithLength(1 * MB, options: MTLResourceOptions.CPUCacheModeDefaultCache)
-        m_indexBuffer = m_scene.m_device.newBufferWithLength(1 * MB, options: MTLResourceOptions.CPUCacheModeDefaultCache)
+        m_vertexBuffer = m_scene.m_device.newBufferWithLength(3 * MB, options: MTLResourceOptions.CPUCacheModeDefaultCache)
+        m_indexBuffer = m_scene.m_device.newBufferWithLength(3 * MB, options: MTLResourceOptions.CPUCacheModeDefaultCache)
     }
     
     

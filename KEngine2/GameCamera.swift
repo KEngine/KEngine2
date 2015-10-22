@@ -33,7 +33,7 @@ class GameCamera:NSObject{
         m_scene = scene
         m_pos = pos
         m_viewMatrix.matrixFromLookAt(m_pos, center: center, up: up)
-        m_projectionMatrix.MatrixMakeFrustum_oc(-1, right: 1, bottom: -Float(scene.view.frame.width / scene.view.frame.height), top: Float(scene.view.frame.width / scene.view.frame.height), near: 0.1, far: -1000)
+        m_projectionMatrix.MatrixMakeFrustum(-1, right: 1, bottom: -Float(scene.view.frame.width / scene.view.frame.height), top: Float(scene.view.frame.width / scene.view.frame.height), near: 0.1, far: -1000)
         m_viewBuffer = GameUniformBuffer(data: m_viewMatrix.dumpToSwift(), scene: scene)
         m_projectionBuffer = GameUniformBuffer(data: m_projectionMatrix.dumpToSwift(), scene: scene)
     }
@@ -42,7 +42,7 @@ class GameCamera:NSObject{
         
     
     func changeSize(){
-        m_projectionMatrix.MatrixMakeFrustum_oc(-1, right: 1, bottom: -Float(m_scene.view.frame.width / m_scene.view.frame.height), top: Float(m_scene.view.frame.width / m_scene.view.frame.height), near: 0.1, far: -1000)
+        m_projectionMatrix.MatrixMakeFrustum(-1, right: 1, bottom: -Float(m_scene.view.frame.width / m_scene.view.frame.height), top: Float(m_scene.view.frame.width / m_scene.view.frame.height), near: 0.1, far: -1000)
         m_projectionBuffer.updateBuffer(m_projectionMatrix.dumpToSwift())
     }
     
